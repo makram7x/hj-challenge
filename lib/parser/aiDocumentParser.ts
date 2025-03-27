@@ -1,4 +1,4 @@
-import { openai, AI_CONFIG, handleAiError } from "@/lib/ai/aiConfig";
+import { openai } from "@/lib/ai/aiConfig";
 
 /**
  * AI-enhanced document parsing to extract structured information from CV/resume
@@ -25,6 +25,9 @@ Extract and organize the following information:
 Format the information in a structured way. If any section is not present in the CV, indicate that it's not available.
 `;
 
+    if (!openai) {
+      throw new Error("OpenAI client is not initialized");
+    }
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini", // Using a cheaper model for parsing
       messages: [

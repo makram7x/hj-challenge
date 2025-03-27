@@ -80,8 +80,8 @@ export default function UploadPage() {
       setProcessingStage("Parsing CV document...");
       updateProgress(10, 300);
 
-      // Parse and enhance the CV
-      const { rawText, enhancedText } = await parseAndEnhanceCv(file);
+      // Parse and enhance the CV - removing unused rawText variable
+      const { enhancedText } = await parseAndEnhanceCv(file);
 
       setProcessingStage("Analyzing job requirements...");
       updateProgress(40, 400);
@@ -102,9 +102,13 @@ export default function UploadPage() {
       setTimeout(() => {
         router.push("/interview");
       }, 1000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error processing upload:", error);
-      setFileError(`Error processing your CV: ${error.message}`);
+      setFileError(
+        `Error processing your CV: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       setIsUploading(false);
       setUploadProgress(0);
       setProcessingStage("");

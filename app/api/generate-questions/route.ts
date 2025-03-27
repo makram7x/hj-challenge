@@ -53,10 +53,12 @@ export async function POST(request: Request) {
       console.log(
         "OpenAI not configured, using mock data for question generation"
       );
-      const mockResult = mockAIService.generateQuestions(
-        jobDescription,
-        cvContent || ""
-      );
+      // Try calling with just one parameter if cvContent is undefined
+      const mockResult =
+        cvContent !== undefined
+          ? mockAIService.generateQuestions(jobDescription, cvContent)
+          : mockAIService.generateQuestions(jobDescription);
+
       return NextResponse.json(mockResult);
     }
 
@@ -139,10 +141,12 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
         console.log(
           "API call failed or returned empty response, using mock data"
         );
-        const mockResult = mockAIService.generateQuestions(
-          jobDescription,
-          cvContent || ""
-        );
+        // Try calling with just one parameter if cvContent is undefined
+        const mockResult =
+          cvContent !== undefined
+            ? mockAIService.generateQuestions(jobDescription, cvContent)
+            : mockAIService.generateQuestions(jobDescription);
+
         return NextResponse.json(mockResult);
       }
 
@@ -182,10 +186,7 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
           .join("\n");
 
         // Perform bias detection on the generated questions
-        biasMetrics = (await detectBias(
-          allQuestions,
-          "questions"
-        )) as BiasMetrics;
+        biasMetrics = (await detectBias(allQuestions)) as BiasMetrics;
 
         // If high bias detected, provide alternative questions
         if (biasMetrics.biasScore > 50) {
@@ -239,10 +240,12 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
 
       // Fall back to mock data on error
       console.log("Falling back to mock questions due to error");
-      const mockResult = mockAIService.generateQuestions(
-        jobDescription,
-        cvContent || ""
-      );
+      // Try calling with just one parameter if cvContent is undefined
+      const mockResult =
+        cvContent !== undefined
+          ? mockAIService.generateQuestions(jobDescription, cvContent)
+          : mockAIService.generateQuestions(jobDescription);
+
       return NextResponse.json(mockResult);
     }
   } catch (error) {
@@ -252,17 +255,21 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
     // Return mock data instead of an error
     try {
       const { jobDescription, cvContent } = await request.json();
-      const mockResult = mockAIService.generateQuestions(
-        jobDescription || "Software Developer position",
-        cvContent || ""
-      );
+      const defaultJobDesc = jobDescription || "Software Developer position";
+
+      // Try calling with just one parameter if cvContent is undefined
+      const mockResult =
+        cvContent !== undefined
+          ? mockAIService.generateQuestions(defaultJobDesc, cvContent)
+          : mockAIService.generateQuestions(defaultJobDesc);
+
       return NextResponse.json(mockResult);
     } catch (e) {
       // If we can't extract request data, create mock data with empty inputs
       console.log("Using default mock data due to error:", e);
+      // Call with just one parameter
       const mockResult = mockAIService.generateQuestions(
-        "Software Developer position",
-        ""
+        "Software Developer position"
       );
       return NextResponse.json(mockResult);
     }

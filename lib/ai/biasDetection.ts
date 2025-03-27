@@ -2,7 +2,6 @@ import {
   openai,
   AI_CONFIG,
   isOpenAIConfigured,
-  mockAIService,
 } from "@/lib/ai/aiConfig";
 
 // Bias detection service

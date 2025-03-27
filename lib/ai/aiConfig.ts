@@ -62,30 +62,39 @@ export const AI_CONFIG = {
 };
 
 // Helper function to handle API errors
-export function handleAiError(error: any): string {
+export function handleAiError(error: unknown): string {
   console.error("AI API Error:", error);
 
+  // Type guard to check if error has a response property
+  type ErrorWithResponse = {
+    status?: number;
+    response?: {
+      status: number;
+      data?: unknown;
+    };
+    message?: string;
+  };
+
   // Check for API key related errors
-  if (
-    error.status === 401 ||
-    (error.response && error.response.status === 401)
-  ) {
+  const err = error as ErrorWithResponse;
+
+  if (err.status === 401 || (err.response && err.response.status === 401)) {
     console.error("API key error - unauthorized access");
     return "OpenAI API key error: The provided API key is invalid or has expired. Using mock data instead.";
   }
 
-  if (error.response) {
-    console.error("Status:", error.response.status);
-    console.error("Data:", error.response.data);
+  if (err.response) {
+    console.error("Status:", err.response.status);
+    console.error("Data:", err.response.data);
 
     // Handle specific error cases
-    if (error.response.status === 403) {
+    if (err.response.status === 403) {
       return `API access error: The API key doesn't have access to the required models. Please check your OpenAI account.`;
     }
 
-    return `API error: ${error.response.status}`;
-  } else if (error.message) {
-    return `Error: ${error.message}`;
+    return `API error: ${err.response.status}`;
+  } else if (err.message) {
+    return `Error: ${err.message}`;
   } else {
     return "An unknown error occurred with the AI service";
   }
@@ -104,9 +113,21 @@ export function checkAndWarnAboutApiKey(): void {
   }
 }
 
+// Define interfaces for the message types
+interface Message {
+  id?: string;
+  role: string;
+  content: string;
+  timestamp?: number;
+}
+
+// Define types that align with BiasDetectionResult
+type BiasType = "gender" | "age" | "cultural" | "racial" | "other";
+type BiasSeverity = "low" | "medium" | "high";
+
 // Mock data generator for development when API isn't available
 export const mockAIService = {
-  generateQuestions: (jobDescription: string, cvContent: string) => {
+  generateQuestions: (jobDescription: string) => {
     console.log("Using mock question generation");
 
     // Parse job description for role hints
@@ -309,7 +330,7 @@ export const mockAIService = {
   },
 
   analyzeInterview: (
-    chatHistory: any[],
+    chatHistory: Message[],
     responseTimes: Record<string, number>
   ) => {
     console.log("Using mock interview analysis");
@@ -425,7 +446,7 @@ export const mockAIService = {
   },
 
   // Improved sentiment analysis mock
-  analyzeSentiment: (messages: any[]): SentimentResult => {
+  analyzeSentiment: (messages: Message[]): SentimentResult => {
     console.log("Using improved mock sentiment analysis");
 
     // Filter to just get candidate messages
@@ -495,14 +516,13 @@ export const mockAIService = {
     }
 
     // Calculate metrics
-    const baseValue = 50; // Base value for balanced metrics
     const confidence =
-      baseValue + emotionCounts.confident * 5 - emotionCounts.uncertain * 5;
+      50 + emotionCounts.confident * 5 - emotionCounts.uncertain * 5;
     const enthusiasm =
-      baseValue + emotionCounts.enthusiastic * 5 - emotionCounts.nervous * 2;
+      50 + emotionCounts.enthusiastic * 5 - emotionCounts.nervous * 2;
     const nervousness =
-      baseValue + emotionCounts.nervous * 5 - emotionCounts.confident * 3;
-    const engagement = baseValue + emotionCounts.engaged * 5;
+      50 + emotionCounts.nervous * 5 - emotionCounts.confident * 3;
+    const engagement = 50 + emotionCounts.engaged * 5;
 
     // Normalize values between 0-100
     const normalizeValue = (value: number) => Math.max(0, Math.min(100, value));
@@ -546,7 +566,6 @@ export const mockAIService = {
         index / Math.max(1, candidateMessages.length - 1)
       );
       const lengthFactor = Math.min(1, text.length / 500); // Longer responses tend to show more engagement
-      const baseFactor = 0.5; // Base factor
 
       const intensity = Math.floor(
         50 + positionFactor * 20 + lengthFactor * 15 + maxCount * 5
@@ -572,15 +591,17 @@ export const mockAIService = {
   },
 
   // Bias detection mock
-  detectBias: (
-    text: string,
-    context: string = "jobDescription"
-  ): BiasDetectionResult => {
+  detectBias: (text: string): BiasDetectionResult => {
     console.log("Using mock bias detection");
 
     // Simulate bias detection based on common patterns
     const textLower = text.toLowerCase();
-    const biases = [];
+    const biases: Array<{
+      text: string;
+      type: BiasType;
+      severity: BiasSeverity;
+      suggestions: string[];
+    }> = [];
 
     // Check for gender-biased terms
     const genderTerms = [

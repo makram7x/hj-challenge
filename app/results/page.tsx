@@ -237,9 +237,13 @@ export default function ResultsPage() {
         }
 
         setScores(formattedScores);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error analyzing results:", err);
-        setError(err.message || "Failed to analyze interview results");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to analyze interview results"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -377,9 +381,11 @@ export default function ResultsPage() {
 
       setScores(formattedScores);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error regenerating analysis:", err);
-      setError(err.message || "Failed to regenerate analysis");
+      setError(
+        err instanceof Error ? err.message : "Failed to regenerate analysis"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -746,7 +752,7 @@ export default function ResultsPage() {
                 <div className="border border-slate-200 rounded-lg divide-y divide-slate-200 max-h-96 overflow-y-auto">
                   {transcript
                     .filter((msg) => msg.role !== "system") // Filter out system messages
-                    .map((message, index) => (
+                    .map((message) => (
                       <div key={message.id} className="p-4 hover:bg-slate-50">
                         <div className="flex justify-between items-start">
                           <div className="font-medium text-slate-700 flex items-center">
