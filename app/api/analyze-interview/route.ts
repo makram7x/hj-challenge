@@ -74,10 +74,19 @@ export async function POST(request: Request) {
       })
       .join("\n\n");
 
-    // Calculate average response time
-    const userResponseTimes = Object.values(responseTimes).filter(Boolean);
+    // Calculate average response time - FIX HERE
+    // First, ensure we have an array of numbers
+    const userResponseTimes: number[] = Array.isArray(
+      Object.values(responseTimes)
+    )
+      ? Object.values(responseTimes).filter(
+          (time): time is number => typeof time === "number" && Boolean(time)
+        )
+      : [];
+
+    // Then calculate the average
     const avgResponseTime = userResponseTimes.length
-      ? (userResponseTimes as number[]).reduce((sum, time) => sum + time, 0) /
+      ? userResponseTimes.reduce((sum: number, time: number) => sum + time, 0) /
         userResponseTimes.length
       : 0;
 

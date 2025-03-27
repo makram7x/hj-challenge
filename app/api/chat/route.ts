@@ -8,9 +8,28 @@ import {
   checkAndWarnAboutApiKey,
 } from "@/lib/ai/aiConfig";
 
+// Define proper types for the expected data structure
+interface ChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface QuestionContext {
+  jobDescription: string;
+  cvHighlights: string[];
+}
+
+interface ChatRequestData {
+  message: string;
+  questionContext: QuestionContext;
+  chatHistory: ChatMessage[];
+}
+
 export async function POST(request: Request) {
   try {
-    const { message, questionContext, chatHistory } = await request.json();
+    // Parse with type assertion
+    const { message, questionContext, chatHistory } =
+      (await request.json()) as ChatRequestData;
 
     if (!message || !questionContext || !chatHistory) {
       return NextResponse.json(
@@ -29,17 +48,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ response: mockResponse });
     }
 
-    // Format chat history for the API
-    const formattedHistory = chatHistory
-      .filter((msg) => msg.role !== "system") // Filter out any existing system messages to avoid conflicts
-      .map((msg) => ({
-        role: msg.role as "system" | "user" | "assistant",
-        content: msg.content,
-      }));
+    // Format chat history for the API with proper type safety
+    const formattedHistory: ChatMessage[] = Array.isArray(chatHistory)
+      ? chatHistory
+          .filter(
+            (msg): msg is ChatMessage =>
+              typeof msg === "object" &&
+              msg !== null &&
+              "role" in msg &&
+              "content" in msg &&
+              msg.role !== "system" // Filter out any existing system messages to avoid conflicts
+          )
+          .map((msg) => ({
+            role: msg.role,
+            content:
+              typeof msg.content === "string"
+                ? msg.content
+                : String(msg.content),
+          }))
+      : [];
 
     // Create system message with interview context
-    const systemMessage = {
-      role: "system" as const,
+    const systemMessage: ChatMessage = {
+      role: "system",
       content: `
 You are an expert technical interviewer conducting a job interview. Your goal is to evaluate the candidate's suitability for the position.
 
@@ -67,8 +98,8 @@ Your responses should be direct interview questions or follow-ups, without addit
     };
 
     // Add the latest user message
-    const userMessage = {
-      role: "user" as const,
+    const userMessage: ChatMessage = {
+      role: "user",
       content: message,
     };
 
@@ -119,7 +150,7 @@ Your responses should be direct interview questions or follow-ups, without addit
 
     // Return mock data instead of an error
     try {
-      const { message } = await request.json();
+      const { message } = (await request.json()) as { message?: string };
       const mockResponse = mockAIService.generateChatResponse(message || "");
       return NextResponse.json({ response: mockResponse });
     } catch (e) {
