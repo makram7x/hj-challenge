@@ -1,9 +1,8 @@
 // Text summary of sentiment findings
-import React from "react";
+import React, { JSX } from "react";
 import { SentimentResult } from "@/lib/ai/sentimentAnalysis";
 import {
   TrendingUp,
-  TrendingDown,
   AlertCircle,
   ThumbsUp,
   BarChart,
@@ -88,7 +87,7 @@ export default function SentimentSummary({
         <div>
           <h3 className="font-medium text-slate-900">Overall Emotional Tone</h3>
           <p className="text-slate-700 mt-1">
-            The candidate's overall emotional tone was{" "}
+            The candidate overall emotional tone was{" "}
             <span
               className={`font-medium ${
                 sentiment.overall === "positive"

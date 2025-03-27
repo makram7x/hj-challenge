@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Upload,
   FileText,
   CheckCircle,
   AlertCircle,
@@ -141,7 +140,7 @@ export default function UploadPage() {
             Upload Interview Materials
           </h1>
           <p className="text-slate-600 mt-2">
-            Enter a detailed job description and upload the candidate's CV to
+            Enter a detailed job description and upload the candidates CV to
             generate personalized interview questions.
           </p>
         </div>

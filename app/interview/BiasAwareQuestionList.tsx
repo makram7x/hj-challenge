@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle,
   ArrowRight,
-  MessageSquare,
-  Code,
-  CaseSensitive,
 } from "lucide-react";
 import { BiasDetectionResult } from "@/lib/ai/biasDetection";
 import BiasAlert from "@/components/bias/BiasAlert";
@@ -67,19 +64,6 @@ export default function BiasAwareQuestionList({
     }
   };
 
-  // Helper function to get category icon
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "technical":
-        return <Code size={18} className="text-blue-500" />;
-      case "behavioral":
-        return <CaseSensitive size={18} className="text-green-500" />;
-      case "situational":
-        return <MessageSquare size={18} className="text-purple-500" />;
-      default:
-        return <MessageSquare size={18} className="text-gray-500" />;
-    }
-  };
 
   // Get category badge style
   const getCategoryBadgeStyle = (category: string) => {

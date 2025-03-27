@@ -155,6 +155,7 @@ Your responses should be direct interview questions or follow-ups, without addit
       return NextResponse.json({ response: mockResponse });
     } catch (e) {
       // If we can't extract request data, create mock data with empty input
+      console.log("Using mock data due to error:", e);
       const mockResponse = mockAIService.generateChatResponse("");
       return NextResponse.json({ response: mockResponse });
     }

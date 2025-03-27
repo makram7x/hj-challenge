@@ -9,6 +9,31 @@ import {
 } from "@/lib/ai/aiConfig";
 import { detectBias } from "@/lib/ai/biasDetection";
 
+// Add these interfaces at the top of the file
+interface Question {
+  id: string;
+  text: string;
+  category: string;
+  hasBias?: boolean;
+  biasType?: string;
+  biasSeverity?: "low" | "medium" | "high";
+  alternativeText?: string;
+}
+
+interface BiasDetection {
+  text: string;
+  type: string;
+  severity: "low" | "medium" | "high";
+  suggestions: string[];
+}
+
+interface BiasMetrics {
+  biasScore: number;
+  fairnessScore: number;
+  detectedBiases: BiasDetection[];
+  overallAssessment: string;
+}
+
 export async function POST(request: Request) {
   try {
     const { jobDescription, cvContent } = await request.json();
@@ -142,19 +167,25 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
         }
       }
 
-      // Parse JSON response
-      const questionsResult = JSON.parse(jsonContent);
+      // Parse JSON response with proper typing
+      const questionsResult = JSON.parse(jsonContent) as {
+        questions: Question[];
+        context: Record<string, unknown>;
+      };
 
       // Check questions for bias
-      let biasMetrics;
+      let biasMetrics: BiasMetrics;
       try {
         // Combine all questions for bias analysis
         const allQuestions = questionsResult.questions
-          .map((q: any) => q.text)
+          .map((q: Question) => q.text)
           .join("\n");
 
         // Perform bias detection on the generated questions
-        biasMetrics = await detectBias(allQuestions, "questions");
+        biasMetrics = (await detectBias(
+          allQuestions,
+          "questions"
+        )) as BiasMetrics;
 
         // If high bias detected, provide alternative questions
         if (biasMetrics.biasScore > 50) {
@@ -228,6 +259,7 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
       return NextResponse.json(mockResult);
     } catch (e) {
       // If we can't extract request data, create mock data with empty inputs
+      console.log("Using default mock data due to error:", e);
       const mockResult = mockAIService.generateQuestions(
         "Software Developer position",
         ""

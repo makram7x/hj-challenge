@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { JSX } from "react";
 import {
   Scale,
   Shield,
@@ -152,7 +152,7 @@ export default function FairnessAssuranceSection({
                       {bias.type} bias - {bias.severity} severity
                     </div>
                   </div>
-                  <p className="text-slate-700 mb-2">"{bias.text}"</p>
+                  <p className="text-slate-700 mb-2">`${bias.text}`</p>
                   <div>
                     <div className="text-sm font-medium mb-1">Suggestions:</div>
                     <ul className="text-sm text-slate-600 pl-5 list-disc">

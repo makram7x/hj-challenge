@@ -5,11 +5,9 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle,
-  Clock,
   BadgeCheck,
   MessageSquare,
   Zap,
-  Lightbulb,
   User,
   UserCheck,
   AlertTriangle,
@@ -20,13 +18,13 @@ import {
   ThumbsDown,
   HelpCircle,
   Activity,
-  BarChart4,
   Heart,
 } from "lucide-react";
 import SentimentChart from "@/components/sentiment/SentimentChart";
 import SentimentSummary from "@/components/sentiment/SentimentSummary";
 import { SentimentResult } from "@/lib/ai/sentimentAnalysis";
 import FairnessAssuranceSection from "@/components/bias/FairnessAssuranceSection";
+import { BiasDetectionResult } from "@/lib/ai/biasDetection";
 
 interface Message {
   id: string;

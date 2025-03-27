@@ -10,6 +10,63 @@ import {
 import { analyzeSentiment } from "@/lib/ai/sentimentAnalysis";
 import { detectBias } from "@/lib/ai/biasDetection";
 
+// Define interfaces for improved type safety
+interface ScoreItem {
+  score: number;
+  explanation: string;
+}
+
+interface BiasMetrics {
+  biasScore: number;
+  fairnessScore: number;
+  detectedBiases: Array<{
+    text: string;
+    type: string;
+    severity: string;
+    suggestions: string[];
+  }>;
+  overallAssessment: string;
+}
+
+interface SentimentResult {
+  overall: string;
+  confidence: number;
+  enthusiasm: number;
+  nervousness: number;
+  engagement: number;
+}
+
+interface AnalysisResult {
+  scores: {
+    domainKnowledge: ScoreItem;
+    communication: ScoreItem;
+    responseQuality: ScoreItem;
+    experienceRelevance: ScoreItem;
+    culturalFit: ScoreItem;
+    emotionalIntelligence: ScoreItem;
+    overall: number;
+  };
+  strengths: string[];
+  improvements: string[];
+  isQualified: boolean;
+  qualificationReasoning: string;
+  summary: string;
+  fairnessAssurance: {
+    potentialBiases: string;
+    mitigationSteps: string;
+    diverseEvaluationConsiderations: string;
+  };
+  sentimentInsights: {
+    emotionalPatterns: string;
+    confidenceObservations: string;
+    engagementAssessment: string;
+    recommendationsBasedOnSentiment: string;
+  };
+  // These will be added after parsing
+  biasMetrics?: BiasMetrics;
+  sentiment?: SentimentResult;
+}
+
 export async function POST(request: Request) {
   try {
     const { jobDescription, cvContent, chatHistory, responseTimes } =
@@ -47,7 +104,7 @@ export async function POST(request: Request) {
     }
 
     // Perform sentiment analysis
-    let sentimentResult;
+    let sentimentResult: SentimentResult;
     try {
       console.log("Analyzing sentiment...");
       sentimentResult = await analyzeSentiment(chatHistory);
@@ -58,8 +115,8 @@ export async function POST(request: Request) {
 
     // Format the transcript for better readability
     const formattedTranscript = chatHistory
-      .filter((msg: any) => msg.role !== "system") // Exclude system messages
-      .map((msg: any, index: number) => {
+      .filter((msg: { role: string }) => msg.role !== "system") // Exclude system messages
+      .map((msg: { role: string; content: string }, index: number) => {
         const role = msg.role === "user" ? "Candidate" : "Interviewer";
         const responseTime =
           msg.role === "user"
@@ -308,16 +365,32 @@ Your response should be in JSON format as follows:
         }
       }
 
-      // Parse JSON response
-      const analysisResult = JSON.parse(jsonContent);
+      // Parse JSON response with proper typing
+      const analysisResult = JSON.parse(jsonContent) as AnalysisResult;
 
       // Perform bias detection on the analysis result
-      let biasMetrics;
+      let biasMetrics: BiasMetrics;
       try {
-        // Extract evaluation text for bias analysis
+        // Extract evaluation text from only the specific score items we know have explanations
+        const scoreKeys = [
+          "domainKnowledge",
+          "communication",
+          "responseQuality",
+          "experienceRelevance",
+          "culturalFit",
+          "emotionalIntelligence",
+        ];
+
+        // More explicit type assertion approach
         const evaluationText =
-          Object.values(analysisResult.scores)
-            .map((score: any) => score.explanation || "")
+          scoreKeys
+            .map((key) => {
+              // Explicitly assert this is a ScoreItem (we know these keys have ScoreItem values)
+              const scoreItem = analysisResult.scores[
+                key as keyof typeof analysisResult.scores
+              ] as ScoreItem;
+              return scoreItem.explanation || "";
+            })
             .join("\n") +
           "\n" +
           analysisResult.qualificationReasoning +
@@ -325,11 +398,14 @@ Your response should be in JSON format as follows:
           analysisResult.summary;
 
         console.log("Analyzing evaluation for bias...");
-        biasMetrics = await detectBias(evaluationText, "analysis");
+        biasMetrics = (await detectBias(
+          evaluationText,
+          "analysis"
+        )) as BiasMetrics;
       } catch (biasError) {
         console.error("Error detecting bias in analysis:", biasError);
         // Use mock bias detection as fallback
-        biasMetrics = mockAIService.detectBias("", "analysis");
+        biasMetrics = mockAIService.detectBias("", "analysis") as BiasMetrics;
       }
 
       // Add bias and sentiment data to the result
@@ -372,11 +448,13 @@ Your response should be in JSON format as follows:
         sentiment: sentimentResult,
         biasMetrics,
       });
-    } catch (e) {
+    } catch (error) {
       // If we can't extract request data, create mock data with empty inputs
       const mockResult = mockAIService.analyzeInterview([], {});
       const sentimentResult = mockAIService.analyzeSentiment([]);
       const biasMetrics = mockAIService.detectBias("", "analysis");
+
+      console.log("Using default mock data due to error:", error);
 
       return NextResponse.json({
         ...mockResult,

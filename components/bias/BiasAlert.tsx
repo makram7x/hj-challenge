@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import { AlertTriangle, XCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { BiasDetectionResult } from "@/lib/ai/biasDetection";
 
@@ -167,7 +167,7 @@ export default function BiasAlert({
                       >
                         {bias.type}
                       </span>
-                      <span className="font-medium">"{bias.text}"</span>
+                      <span className="font-medium">`${bias.text}`</span>
                     </div>
                     <span className="text-xs uppercase font-medium">
                       {bias.severity} severity
@@ -188,7 +188,7 @@ export default function BiasAlert({
                             size={12}
                             className="mr-1 flex-shrink-0"
                           />
-                          <span className="mr-2">"{suggestion}"</span>
+                          <span className="mr-2">`${suggestion}`</span>
                           {onApplySuggestion && (
                             <button
                               onClick={() =>

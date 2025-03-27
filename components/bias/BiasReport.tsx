@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { JSX } from "react";
 import { BiasDetectionResult } from "@/lib/ai/biasDetection";
 import {
   AlertTriangle,
@@ -256,7 +256,7 @@ export default function BiasReport({
                   <div className="mb-3">
                     <p className="font-medium mb-1">Detected Text:</p>
                     <div className="bg-white p-2 rounded border">
-                      "{bias.text}"
+                      `${bias.text}`
                     </div>
                   </div>
 
@@ -268,8 +268,7 @@ export default function BiasReport({
                           key={i}
                           className="bg-white p-2 rounded border flex"
                         >
-                          <span className="text-gray-500 mr-2">{i + 1}.</span>"
-                          {suggestion}"
+                          <span className="text-gray-500 mr-2">{i + 1}.</span>`${suggestion}` 
                         </li>
                       ))}
                     </ul>
