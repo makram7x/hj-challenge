@@ -53,12 +53,13 @@ export async function POST(request: Request) {
       console.log(
         "OpenAI not configured, using mock data for question generation"
       );
-      // Try calling with just one parameter if cvContent is undefined
-      const mockResult =
-        cvContent !== undefined
-          ? mockAIService.generateQuestions(jobDescription, cvContent)
-          : mockAIService.generateQuestions(jobDescription);
 
+      // Combine jobDescription and cvContent if available
+      const combinedInput = cvContent
+        ? `${jobDescription}\n\nCV Content:\n${cvContent}`
+        : jobDescription;
+
+      const mockResult = mockAIService.generateQuestions(combinedInput);
       return NextResponse.json(mockResult);
     }
 
@@ -141,12 +142,13 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
         console.log(
           "API call failed or returned empty response, using mock data"
         );
-        // Try calling with just one parameter if cvContent is undefined
-        const mockResult =
-          cvContent !== undefined
-            ? mockAIService.generateQuestions(jobDescription, cvContent)
-            : mockAIService.generateQuestions(jobDescription);
 
+        // Combine jobDescription and cvContent if available
+        const combinedInput = cvContent
+          ? `${jobDescription}\n\nCV Content:\n${cvContent}`
+          : jobDescription;
+
+        const mockResult = mockAIService.generateQuestions(combinedInput);
         return NextResponse.json(mockResult);
       }
 
@@ -240,12 +242,13 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
 
       // Fall back to mock data on error
       console.log("Falling back to mock questions due to error");
-      // Try calling with just one parameter if cvContent is undefined
-      const mockResult =
-        cvContent !== undefined
-          ? mockAIService.generateQuestions(jobDescription, cvContent)
-          : mockAIService.generateQuestions(jobDescription);
 
+      // Combine jobDescription and cvContent if available
+      const combinedInput = cvContent
+        ? `${jobDescription}\n\nCV Content:\n${cvContent}`
+        : jobDescription;
+
+      const mockResult = mockAIService.generateQuestions(combinedInput);
       return NextResponse.json(mockResult);
     }
   } catch (error) {
@@ -257,12 +260,12 @@ Ensure the questions are fair, relevant to the position, free from bias, and all
       const { jobDescription, cvContent } = await request.json();
       const defaultJobDesc = jobDescription || "Software Developer position";
 
-      // Try calling with just one parameter if cvContent is undefined
-      const mockResult =
-        cvContent !== undefined
-          ? mockAIService.generateQuestions(defaultJobDesc, cvContent)
-          : mockAIService.generateQuestions(defaultJobDesc);
+      // Combine jobDescription and cvContent if available
+      const combinedInput = cvContent
+        ? `${defaultJobDesc}\n\nCV Content:\n${cvContent}`
+        : defaultJobDesc;
 
+      const mockResult = mockAIService.generateQuestions(combinedInput);
       return NextResponse.json(mockResult);
     } catch (e) {
       // If we can't extract request data, create mock data with empty inputs
