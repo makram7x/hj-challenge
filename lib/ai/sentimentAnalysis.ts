@@ -49,12 +49,10 @@ export interface SentimentResult {
 /**
  * Analyzes the sentiment of a candidate's responses during an interview
  * @param messages The chat history messages from the interview
- * @param jobContext Optional job context to improve analysis accuracy
  * @returns A SentimentResult object with detailed sentiment analysis
  */
 export async function analyzeSentiment(
-  messages: Message[],
-  jobContext?: string
+  messages: Message[]
 ): Promise<SentimentResult> {
   // Filter to only candidate messages (user role)
   const candidateMessages = messages.filter((msg) => msg.role === "user");
@@ -66,21 +64,15 @@ export async function analyzeSentiment(
   // Check if OpenAI is configured
   if (!isOpenAIConfigured()) {
     console.log("OpenAI not configured, using basic sentiment analysis");
-    return analyzeWithBasicApproach(candidateMessages, jobContext);
+    return analyzeWithBasicApproach(candidateMessages);
   }
 
   try {
-    // First analyze the overall sentiment metrics with job context
-    const overallMetrics = await analyzeOverallSentiment(
-      candidateMessages,
-      jobContext
-    );
+    // First analyze the overall sentiment metrics
+    const overallMetrics = await analyzeOverallSentiment(candidateMessages);
 
-    // Then analyze each message for the emotional journey with job context
-    const emotionalJourney = await analyzeEmotionalJourney(
-      candidateMessages,
-      jobContext
-    );
+    // Then analyze each message for the emotional journey
+    const emotionalJourney = await analyzeEmotionalJourney(candidateMessages);
 
     return {
       ...overallMetrics,
@@ -89,7 +81,7 @@ export async function analyzeSentiment(
   } catch (error) {
     console.error("Error in sentiment analysis:", error);
     // Fall back to basic approach if AI analysis fails
-    return analyzeWithBasicApproach(candidateMessages, jobContext);
+    return analyzeWithBasicApproach(candidateMessages);
   }
 }
 
@@ -97,13 +89,12 @@ export async function analyzeSentiment(
  * Analyzes the overall sentiment metrics for an interview
  */
 async function analyzeOverallSentiment(
-  candidateMessages: Message[],
-  jobContext?: string
+  candidateMessages: Message[]
 ): Promise<Omit<SentimentResult, "emotionalJourney">> {
   // Combine all candidate messages for overall analysis
   const allResponses = candidateMessages.map((msg) => msg.content).join("\n\n");
 
-  // Create the prompt for sentiment analysis with job context
+  // Create the prompt for sentiment analysis
   const prompt = `
 You are an expert in analyzing job interview responses for emotional signals and professional communication patterns. Analyze the following set of candidate responses from a job interview.
 
@@ -111,11 +102,7 @@ CANDIDATE RESPONSES:
 ${allResponses}
 
 JOB CONTEXT:
-${
-  jobContext
-    ? `This is for a ${jobContext} role.`
-    : "This is a professional job interview."
-}
+This is a professional job interview.
 
 Provide a detailed emotional and communication analysis in JSON format with these fields:
 1. overall: The overall emotional tone ("positive", "neutral", or "negative")
@@ -200,8 +187,7 @@ IMPORTANT: Calibrate scores based on professional interview context, not casual 
  * Analyzes the emotional journey throughout the interview with improved context awareness
  */
 async function analyzeEmotionalJourney(
-  candidateMessages: Message[],
-  jobContext?: string
+  candidateMessages: Message[]
 ): Promise<Array<{ timestamp: number; emotion: string; intensity: number }>> {
   const journey: Array<{
     timestamp: number;
@@ -228,8 +214,7 @@ async function analyzeEmotionalJourney(
 
       const batchJourney = await analyzeMessageBatchWithContext(
         contextBatch,
-        contextIndices,
-        jobContext
+        contextIndices
       );
 
       // Only add the newly analyzed messages (not the context ones)
@@ -253,8 +238,7 @@ async function analyzeEmotionalJourney(
  */
 async function analyzeMessageBatchWithContext(
   messages: Message[],
-  contextIndices: boolean[],
-  jobContext?: string
+  contextIndices: boolean[]
 ): Promise<Array<{ timestamp: number; emotion: string; intensity: number }>> {
   const results: Array<{
     timestamp: number;
@@ -275,11 +259,7 @@ async function analyzeMessageBatchWithContext(
 Analyze the emotional tone of interview responses with context awareness.
 
 INTERVIEW CONTEXT:
-${
-  jobContext
-    ? `This is an interview for a ${jobContext} role.`
-    : "This is a professional job interview."
-}
+This is a professional job interview.
 
 RESPONSES:
 ${messagesToAnalyze}
@@ -502,8 +482,7 @@ function generateFallbackEmotionalJourney(
  * Analyzes sentiment using a more sophisticated rule-based approach when AI is not available
  */
 function analyzeWithBasicApproach(
-  candidateMessages: Message[],
-  jobContext?: string
+  candidateMessages: Message[]
 ): SentimentResult {
   // Extract all the text content
   const allText = candidateMessages
@@ -1271,8 +1250,7 @@ function cacheSentimentResult(
  * Wrapped version of analyzeSentiment with caching
  */
 export async function analyzeSentimentWithCache(
-  messages: Message[],
-  jobContext?: string
+  messages: Message[]
 ): Promise<SentimentResult> {
   // Check cache first
   const cached = getCachedSentiment(messages);
@@ -1281,7 +1259,7 @@ export async function analyzeSentimentWithCache(
   }
 
   // Perform analysis
-  const result = await analyzeSentiment(messages, jobContext);
+  const result = await analyzeSentiment(messages);
 
   // Cache result
   cacheSentimentResult(messages, result);
