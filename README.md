@@ -1,144 +1,249 @@
-# AI-Powered Dynamic Interview Assistant with Candidate Profiling & Scoring
+unfortunatly I wasn't able to deploy the system on vercerl I run into some issues and the time wasn't enough BUT!!! I have implemented 2 extra features that I think are worth considering, sentiment analyses and bias mitigation
 
-## Objective
+# To run the project
+1. npm install
+2. npm run dev
 
-Develop a **Next.js** web application that enables recruiters to upload both a job description and a candidate’s CV. The system will then generate personalized interview questions using an AI API, conduct a one-shot, dynamic multi-turn interview via a chat interface, and finally produce a performance evaluation that includes scoring based on answer quality and the time taken to respond.
+# AI-Enhanced Interview System
 
----
+## Overview
 
-## Core Tasks
+The AI-Enhanced Interview System leverages artificial intelligence to create fair, balanced, and effective interview processes. By analyzing job descriptions and candidate CVs, the system generates contextually relevant questions while mitigating bias and providing advanced sentiment analysis of candidate responses.
 
-### 1. Dual Data Input
+## Approach to Parsing Job Descriptions and Candidate CVs
 
-#### A. Job Description Input
-- **Input Form**:  
-  - Create a responsive form where recruiters can enter or select a detailed job description.
-  - Validate input to ensure sufficient detail (e.g., minimum character count).
+### Job Description Processing
 
-#### B. Candidate CV Upload
-- **CV Upload Interface**:  
-  - Allow users to upload a candidate’s CV (supporting PDF, DOCX, or plain text).
-  - Optionally, perform basic parsing or use the AI API to extract key candidate details.
+Our system accepts job descriptions in plain text format, which are then analyzed to identify:
+- Key skills and competencies required for the role
+- Technical requirements and qualifications
+- Experience level expectations
+- Team and company context information
 
----
+### CV Parsing
 
-### 2. AI-Driven Question Generation
+We've implemented an AI-enhanced document parser that handles multiple file formats:
+- PDF documents
+- DOCX files
+- Plain text files
 
-- **Data Fusion for Question Generation**:  
-  - Use an AI API (e.g., OpenAI) to process both the job description and the candidate’s CV.
-  - **Prompt Design**: Craft prompts to ensure the AI considers both data sources to generate a tailored set of interview questions.
-  - **Output**: Generate a set of questions that are contextually relevant to the role and the candidate’s background, optionally categorizing them (e.g., technical, behavioral, situational).
+The CV parsing process follows these steps:
 
----
+1. **Initial Text Extraction**: Raw text is extracted from the uploaded file based on its type.
+2. **AI-Enhanced Information Extraction**: Using the `extractCvInfo` function, the system processes the raw text through an LLM (GPT-4o-mini) with a specialized prompt to structure the information into:
+   - Candidate name and contact information
+   - Professional summary
+   - Key skills and technologies
+   - Professional experience with company names, roles, dates, and achievements
+   - Education and certifications
+   - Languages and other notable information
 
-### 3. One-Shot Dynamic Interview Chat Interface
+```typescript
+// Example of the structured prompt used for CV extraction
+const prompt = `
+You are an expert CV analyzer. Extract the key information from the following CV/resume.
 
-- **Chat Window Setup**:  
-  - Develop a streamlined chat interface where the candidate answers the AI-generated questions in a continuous, uninterrupted session.
-  - Clearly display the AI interviewer’s questions and capture candidate responses in real time.
+CV Content:
+${cvText}
 
-- **Multi-Turn, Context-Aware Conversation**:  
-  - **Continuous Flow**: The conversation proceeds in one shot without options to pause, review, or restart.
-  - **Adaptive Follow-Up**: The AI interviewer should ask follow-up questions or request clarifications based on the candidate’s answers.
-  - **Timing Metrics**: Automatically record the time taken by the candidate to answer each question. This data should be collected seamlessly as part of the interview flow.
+Extract and organize the following information:
+1. Candidate name (if present)
+2. Contact information (if present)
+3. Professional summary
+...
+`;
+```
 
----
+## AI Prompt Engineering for Context-Aware Questions
 
-### 4. Interview Scoring & Analysis
+### Combined Input Analysis
 
-- **Scoring Trigger**:  
-  - Once the interview concludes, automatically trigger the scoring process based on the entire transcript and timing metrics.
+The system ingeniously combines both the job description and CV content to create a comprehensive context for question generation:
 
-- **AI-Powered Analysis**:  
-  - Use the complete conversation transcript, the original job description, the candidate’s CV, and the recorded response times to generate a detailed performance evaluation.
+```typescript
+// Combining inputs for context-aware processing
+const combinedInput = cvContent
+  ? `${jobDescription}\n\nCV Content:\n${cvContent}`
+  : jobDescription;
+```
 
-- **Scoring Criteria** (for example):
-  - **Technical Acumen**: Evaluation of the candidate’s technical skills as evidenced in their responses.
-  - **Communication Skills**: Clarity, coherence, and effectiveness in conveying ideas.
-  - **Responsiveness & Agility**: Assess how promptly and thoughtfully the candidate responds. Faster, well-considered responses could be scored higher.
-  - **Problem-Solving & Adaptability**: Ability to handle follow-up questions and provide relevant clarifications.
-  - **Cultural Fit & Soft Skills**: Evaluation of interpersonal communication and potential fit for the company culture.
+### Advanced Prompt Design
 
-- **Score Breakdown**:  
-  - Present numerical values or percentages for each category, including a specific metric for response timing.
-  - Provide an overall composite score and a brief summary of the candidate’s strengths and areas for improvement.
+The system uses a sophisticated prompt strategy that:
 
-- **Prompt Engineering**:  
-  - Clearly document how the AI is instructed to evaluate both the content and the timing of responses.
+1. **Sets expert context**: Positions the AI as an "expert in inclusive recruiting"
+2. **Provides clear inputs**: Formats both job description and CV content for analysis
+3. **Establishes quality criteria**: Explicitly requires questions to:
+   - Focus on skills and experience relevant to job performance
+   - Avoid assumptions about background or identity
+   - Allow candidates from diverse backgrounds to demonstrate qualifications
+   - Use inclusive, neutral language
+   - Evaluate candidates on job-relevant criteria only
 
----
+4. **Requires question categorization**:
+   - Technical: Skills and knowledge assessment
+   - Behavioral: Past behavior and experiences evaluation
+   - Situational: Hypothetical scenario handling
 
-### 5. Technical Requirements
+5. **Specifies structured output format**: Requests a JSON response with:
+   - Questions array with ID, text, and category
+   - Context object containing job summary and key competencies
+   - CV highlights when available
 
-- **Framework & UI**:  
-  - Use Next.js (preferably with the App Router).
-  - While UI libraries (e.g., shadcn/ui) may be utilized, the interactive chat interface should be custom-designed to avoid overly template-driven solutions.
+### Error Handling and Fallbacks
 
-- **AI API Integration**:  
-  - Leverage the provided AI API key for both question generation and final scoring.
-  - Implement robust error handling and asynchronous interactions for API calls.
+The system incorporates robust error handling with fallback to mock data when necessary, ensuring reliability even when API calls fail.
 
-- **Deployment & Testing**:  
-  - Deploy the application on **Vercel** and provide a live URL.
-  - Include unit tests covering:
-    - Form validation for job description and CV upload.
-    - AI-driven question generation.
-    - The uninterrupted, one-shot chat interface.
-    - Timing data capture and scoring algorithm.
-  - Provide detailed setup instructions and testing documentation.
+## Scoring Criteria and Timing Metrics
 
----
+While the code doesn't explicitly show scoring implementation, it captures several metrics that could inform candidate evaluation:
 
-## Submission Guidelines
+### Sentiment Analysis Metrics
 
-1. **Repository & Code Organization**
-   - Organize your project with a clear and maintainable directory structure.
-   - Include a detailed README with setup instructions, deployment details, and test running guidelines.
-   - Attach a document describing your prompt design strategy and how both data sources and timing metrics are integrated into the AI evaluation.
+The sentiment analysis provides quantifiable metrics that can factor into scoring:
+- **Confidence score** (0-100): Measures how confident the candidate appears
+- **Enthusiasm score** (0-100): Evaluates excitement about the role/company
+- **Nervousness score** (0-100): Quantifies anxiety or stress signals
+- **Engagement score** (0-100): Assesses how actively involved the candidate is
 
-2. **Documentation**
-   - Explain your approach to parsing the job description and candidate CV.
-   - Describe how the AI prompts are engineered to combine both inputs for generating context-aware questions.
-   - Detail the scoring criteria, including how timing metrics influence the candidate evaluation.
+### Timing and Response Patterns
 
-3. **Deployment**
-   - Ensure the application is deployed on Vercel.
-   - Verify that the full flow is functional: job description/CV input → tailored question generation → uninterrupted dynamic chat interview → AI-powered scoring with timing metrics.
+The system tracks:
+- **Timestamp data** for each message
+- **Time between responses** (used in emotional shift detection)
+- **Response length and complexity** as engagement indicators
 
----
+```typescript
+// Time-based metrics example
+const timeDiff = (current.timestamp - previous.timestamp) / 1000;
+```
 
-## Evaluation Criteria
+These metrics enable the creation of a comprehensive emotional journey map throughout the interview, capturing how candidates evolve from initial nervousness to engagement or confidence.
 
-1. **Functionality & Usability**
-   - Does the application handle dual inputs (job description and CV) and generate relevant interview questions?
-   - Is the chat interface streamlined and intuitive for a one-shot interview session?
-   - Is the timing of candidate responses accurately captured and integrated into the scoring?
+## Sentiment Analysis Feature
 
-2. **AI Integration & Dynamic Flow**
-   - How effectively does the AI API leverage both inputs to generate and adapt interview questions?
-   - Does the one-shot interview process work smoothly without manual intervention?
-   - Is the follow-up questioning appropriately adaptive to candidate responses?
+### Comprehensive Emotional Detection
 
-3. **Scoring & Analysis**
-   - Is the candidate’s performance evaluated on multiple dimensions, including response timing?
-   - Is the score breakdown clear, detailed, and reflective of the candidate’s performance?
-   - Are the AI prompts for scoring well-documented and effective?
+The sentiment analysis feature is one of the system's most sophisticated components, providing:
 
-4. **Code Quality & Documentation**
-   - Is the code modular, clean, and well-documented?
-   - Are unit tests provided for key functionalities?
-   - Is the setup and usage documentation clear and comprehensive?
+1. **Overall emotional tone assessment**: Positive, neutral, or negative
+2. **Four key metrics**: Confidence, enthusiasm, nervousness, and engagement
+3. **Emotional journey mapping**: Tracking emotional states throughout the interview
 
-5. **Deployment & Innovation**
-   - Is the application live on Vercel and fully functional?
-   - Has the candidate introduced innovative touches, particularly regarding the integration of timing metrics into the scoring process?
+### Advanced Analysis Methodology
 
----
+The system uses a multi-layered approach:
 
-## Final Notes
+1. **AI-Based Analysis**: When OpenAI is configured, the system uses LLMs to analyze candidate responses with specialized prompts.
 
-- **Creativity is Encouraged**: Consider any additional features that enhance the recruitment process, such as nuanced timing-based insights or a refined scoring algorithm.
-- **Clarify Assumptions**: Clearly document any assumptions made during development, particularly regarding the weight of response times in scoring.
-- **Time Management**: The challenge is designed to be completed within 5 days, so prioritize delivering a robust core experience with strong AI integration and clear scoring mechanisms.
+2. **Sophisticated Rule-Based Fallback**: When AI services are unavailable, the system falls back to an advanced rule-based approach that:
+   - Analyzes text for emotional indicators using weighted patterns
+   - Considers response length and complexity
+   - Factors in interview stage progression
 
-Good luck, and we look forward to seeing your innovative approach to an AI-driven, dynamic interview and evaluation system!
+3. **Context-Aware Processing**: The system analyzes messages in context rather than isolation:
+   ```typescript
+   // Context-aware batch processing
+   const contextBatch = candidateMessages.slice(startIndex, i + batchSize);
+   const contextIndices = Array.from(
+     { length: contextBatch.length },
+     (_, idx) => startIndex + idx < i
+   );
+   ```
+
+4. **Emotional Shift Detection**: The system identifies significant emotional transitions:
+   ```typescript
+   // Detecting emotional shifts
+   if (prevCategory !== currCategory) {
+     if (currCategory === "positive") shiftType = "positive";
+     else if (currCategory === "negative") shiftType = "negative";
+   }
+   ```
+
+5. **Pattern Recognition**: The system looks for linguistic patterns that indicate emotions:
+   ```typescript
+   const emotionPatterns = {
+     enthusiastic: {
+       phrases: ["excited", "passionate", "love", "thrilled", ...],
+       expressionPatterns: [/!{1,}/g, /\bgreat\b/g, ...],
+       weight: 1.2,
+     },
+     // More emotion patterns...
+   };
+   ```
+
+6. **Results Smoothing**: The system applies post-processing to eliminate unlikely rapid changes and outliers.
+
+## Bias Mitigation Feature
+
+### Comprehensive Bias Detection
+
+The system includes a sophisticated bias detection engine that:
+
+1. **Analyzes generated questions** for potential bias related to:
+   - Gender (pronouns, gendered terms)
+   - Age (age-specific requirements)
+   - Race/ethnicity (terms with racial connotations)
+   - Cultural background (cultural assumptions)
+   - Disability (ableist language)
+   - Socioeconomic status (class-based assumptions)
+
+2. **Context-aware analysis**: The system adapts its bias detection based on whether it's analyzing:
+   - Job descriptions
+   - Interview questions
+   - Candidate evaluations
+
+3. **Quantifiable metrics**:
+   - Bias score (0-100, lower is better)
+   - Fairness score (0-100, higher is better)
+   - Detailed bias instances with severity levels
+
+### Bias Remediation
+
+The system doesn't just detect bias - it actively addresses it:
+
+1. **Alternative suggestion generation**: For each detected bias instance, the system provides inclusive alternatives:
+   ```typescript
+   // Gender-neutral suggestion examples
+   const suggestions: Record<string, string[]> = {
+     "he ": ["they", "the person", "the individual", "the candidate"],
+     // More suggestions...
+   };
+   ```
+
+2. **Question reformulation**: When high bias is detected in generated questions:
+   ```typescript
+   // Reformulating biased questions
+   if (biasMetrics.biasScore > 50) {
+     console.log(
+       "High bias detected in generated questions, adding alternative suggestions"
+     );
+     
+     // Mark questions with bias and add alternative suggestions
+     for (const bias of biasMetrics.detectedBiases) {
+       for (const question of questionsResult.questions) {
+         if (question.text.toLowerCase().includes(bias.text.toLowerCase())) {
+           question.hasBias = true;
+           question.biasType = bias.type;
+           question.biasSeverity = bias.severity;
+           
+           // Create alternative version of the question
+           const alternativeSuggestion = 
+             bias.suggestions[0] || "Use more inclusive language";
+           question.alternativeText = question.text.replace(
+             new RegExp(bias.text, "i"),
+             alternativeSuggestion
+           );
+         }
+       }
+     }
+   }
+   ```
+
+### Bias Detection Fallback
+
+When AI services are unavailable, the system uses a sophisticated rule-based approach to check for common bias indicators, ensuring continuous bias mitigation even without external AI services.
+
+## Conclusion
+
+The AI-Enhanced Interview System represents a significant advancement in applying artificial intelligence to recruitment processes. By combining sophisticated document parsing, context-aware question generation, sentiment analysis, and bias mitigation, the system helps create fairer, more effective interviews while providing valuable insights into candidate responses.
